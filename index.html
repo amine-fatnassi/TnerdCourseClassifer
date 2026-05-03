@@ -133,6 +133,23 @@
           </div>
         </div>
 
+        <!-- Custom Prompt Modal -->
+        <div id="prompt-modal" class="overlay hidden">
+          <div class="auth-card prompt-card">
+            <h1 id="prompt-title">Rename</h1>
+            <div class="form-group">
+              <input type="text" id="prompt-input" />
+            </div>
+            <div style="display: flex; gap: 1rem;">
+              <button id="btn-prompt-cancel" class="text-btn">Cancel</button>
+              <button id="btn-prompt-ok" class="primary-btn" style="margin-top: 0;">OK</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container" class="toast-container"></div>
+
         <div class="content-card">
           <!-- Home Screen (Visible by default) -->
           <div id="home-screen" class="home-view fade-in">

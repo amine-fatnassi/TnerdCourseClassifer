@@ -1,4 +1,52 @@
-import './style.css';
+/**
+ * Notification & Prompt Manager
+ */
+class UIManager {
+  constructor() {
+    this.toastContainer = document.getElementById('toast-container');
+    this.promptModal = document.getElementById('prompt-modal');
+    this.promptTitle = document.getElementById('prompt-title');
+    this.promptInput = document.getElementById('prompt-input');
+    this.btnPromptOk = document.getElementById('btn-prompt-ok');
+    this.btnPromptCancel = document.getElementById('btn-prompt-cancel');
+    this.promptCallback = null;
+
+    this.btnPromptCancel.onclick = () => this.hidePrompt();
+    this.btnPromptOk.onclick = () => {
+      if (this.promptCallback) this.promptCallback(this.promptInput.value);
+      this.hidePrompt();
+    };
+  }
+
+  showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    
+    this.toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.classList.add('hide');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+
+  showPrompt(title, defaultValue, callback) {
+    this.promptTitle.innerText = title;
+    this.promptInput.value = defaultValue;
+    this.promptCallback = callback;
+    this.promptModal.classList.remove('hidden');
+    this.promptInput.focus();
+  }
+
+  hidePrompt() {
+    this.promptModal.classList.add('hidden');
+    this.promptCallback = null;
+  }
+}
+
+window.ui = new UIManager();
 
 /**
  * Authentication Manager
@@ -85,7 +133,7 @@ class AuthManager {
     const newName = document.getElementById('settings-name').value;
     const newPass = document.getElementById('settings-password').value;
 
-    if (!newName) return alert('Name cannot be empty');
+    if (!newName) return window.ui.showToast('Name cannot be empty', 'error');
 
     this.currentUser.name = newName;
     if (newPass) this.currentUser.password = newPass;
@@ -93,7 +141,7 @@ class AuthManager {
     this.saveUserData(this.currentUser);
     this.modal.classList.add('hidden');
     this.updateUI();
-    alert('Settings saved!');
+    window.ui.showToast('Profile updated successfully!', 'success');
   }
 
   updateUI() {
@@ -112,12 +160,12 @@ class AuthManager {
     const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
 
-    if (!name || !email || !password) return alert('Please fill all fields');
-    if (this.users[email]) return alert('User already exists');
+    if (!name || !email || !password) return window.ui.showToast('Please fill all fields', 'error');
+    if (this.users[email]) return window.ui.showToast('User already exists', 'error');
 
     this.users[email] = { name, email, password, courses: {} };
     localStorage.setItem('tnerd_users', JSON.stringify(this.users));
-    alert('Account created! Please sign in.');
+    window.ui.showToast('Account created successfully! Welcome to T-NERD 🎉', 'success');
     this.signupForm.classList.add('hidden');
     this.loginForm.classList.remove('hidden');
   }
@@ -130,9 +178,10 @@ class AuthManager {
     if (user && user.password === password) {
       this.currentUser = user;
       localStorage.setItem('tnerd_session', JSON.stringify(user));
+      window.ui.showToast(`Logged in as ${user.name}`, 'success');
       this.showApp();
     } else {
-      alert('Invalid credentials');
+      window.ui.showToast('Invalid credentials', 'error');
     }
   }
 
@@ -237,13 +286,19 @@ class CourseManager {
 
     // Rename
     this.btnRename.onclick = () => {
-      const newName = prompt('Enter new course name:', this.user.courses[this.activeCourseId].displayName || this.activeCourseId);
-      if (newName) {
-        this.user.courses[this.activeCourseId].displayName = newName;
-        this.lessonTitle.innerText = newName;
-        this.renderCourseList();
-        window.authManager.saveUserData(this.user);
-      }
+      window.ui.showPrompt(
+        'Rename Course', 
+        this.user.courses[this.activeCourseId].displayName || this.activeCourseId,
+        (newName) => {
+          if (newName) {
+            this.user.courses[this.activeCourseId].displayName = newName;
+            this.lessonTitle.innerText = newName;
+            this.renderCourseList();
+            window.authManager.saveUserData(this.user);
+            window.ui.showToast('Course renamed successfully', 'success');
+          }
+        }
+      );
     };
   }
 
@@ -447,7 +502,7 @@ class CourseManager {
 
     this.videoPlayer.onerror = (e) => {
       console.error("Video Error:", e);
-      alert("Error loading video. Please ensure the course folder is still accessible.");
+      window.ui.showToast("Error loading video. Please re-sync the course folder.", "error");
     };
 
     this.btnPlayPause.innerText = '⏸';
