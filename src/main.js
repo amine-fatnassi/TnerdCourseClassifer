@@ -52,9 +52,59 @@ class AuthManager {
     document.getElementById('btn-login').onclick = () => this.login();
     document.getElementById('btn-signup').onclick = () => this.signup();
 
+    // User Dropdown & Settings
+    this.avatar = document.getElementById('user-avatar');
+    this.dropdown = document.getElementById('user-dropdown');
+    this.modal = document.getElementById('settings-modal');
+
+    this.avatar.onclick = (e) => {
+      e.stopPropagation();
+      this.dropdown.classList.toggle('hidden');
+    };
+
+    window.onclick = () => this.dropdown.classList.add('hidden');
+
+    document.getElementById('btn-logout').onclick = () => this.logout();
+    document.getElementById('btn-settings').onclick = () => this.showSettings();
+    document.getElementById('btn-close-settings').onclick = () => this.modal.classList.add('hidden');
+    document.getElementById('btn-save-settings').onclick = () => this.saveSettings();
+
     if (this.currentUser) {
       this.showApp();
     }
+  }
+
+  showSettings() {
+    this.modal.classList.remove('hidden');
+    document.getElementById('settings-name').value = this.currentUser.name;
+    document.getElementById('settings-password').value = '';
+    this.dropdown.classList.add('hidden');
+  }
+
+  saveSettings() {
+    const newName = document.getElementById('settings-name').value;
+    const newPass = document.getElementById('settings-password').value;
+
+    if (!newName) return alert('Name cannot be empty');
+
+    this.currentUser.name = newName;
+    if (newPass) this.currentUser.password = newPass;
+
+    this.saveUserData(this.currentUser);
+    this.modal.classList.add('hidden');
+    this.updateUI();
+    alert('Settings saved!');
+  }
+
+  updateUI() {
+    document.getElementById('user-avatar').innerText = this.currentUser.name.substring(0, 2).toUpperCase();
+    document.getElementById('user-display-name').innerText = this.currentUser.name;
+    document.getElementById('welcome-message').innerText = `Welcome back, ${this.currentUser.name.split(' ')[0]}!`;
+  }
+
+  logout() {
+    localStorage.removeItem('tnerd_session');
+    location.reload(); // Simplest way to reset state
   }
 
   signup() {
@@ -90,8 +140,9 @@ class AuthManager {
     this.overlay.classList.add('hidden');
     document.getElementById('sidebar').classList.remove('hidden');
     document.getElementById('main-stage').classList.remove('hidden');
-    document.getElementById('user-avatar').innerText = this.currentUser.name.substring(0, 2).toUpperCase();
-    document.getElementById('welcome-message').innerText = `Welcome back, ${this.currentUser.name.split(' ')[0]}!`;
+    
+    document.getElementById('user-display-email').innerText = this.currentUser.email;
+    this.updateUI();
     
     // Initialize Course Manager once logged in
     window.courseManager = new CourseManager(this.currentUser);
