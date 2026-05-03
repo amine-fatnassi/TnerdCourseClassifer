@@ -1,3 +1,5 @@
+import './style.css';
+
 /**
  * Notification & Prompt Manager
  */
@@ -72,19 +74,15 @@ class AuthManager {
   }
 
   initUI() {
-    this.overlay = document.getElementById('auth-overlay');
+    this.landingPage = document.getElementById('landing-page');
+    this.authSection = document.getElementById('auth-section');
     this.loginForm = document.getElementById('auth-login');
     this.signupForm = document.getElementById('auth-signup');
     
-    // Switch between login/signup
-    document.getElementById('btn-show-signup').onclick = () => {
-      this.loginForm.classList.add('hidden');
-      this.signupForm.classList.remove('hidden');
-    };
-    document.getElementById('btn-show-login').onclick = () => {
-      this.signupForm.classList.add('hidden');
-      this.loginForm.classList.remove('hidden');
-    };
+    this.navActions = document.getElementById('landing-nav-actions');
+    this.navDashboard = document.getElementById('landing-nav-dashboard');
+    this.btnGetStarted = document.getElementById('btn-get-started');
+    this.btnLandingDashboard = document.getElementById('btn-landing-dashboard');
 
     // Password Toggles
     document.querySelectorAll('.toggle-password').forEach(btn => {
@@ -96,7 +94,24 @@ class AuthManager {
       };
     });
 
-    // Actions
+    // Navigation & Hero
+    document.getElementById('btn-nav-login').onclick = () => this.showAuth('login');
+    document.getElementById('btn-nav-signup').onclick = () => this.showAuth('signup');
+    document.getElementById('btn-nav-dashboard').onclick = () => this.showApp();
+    document.getElementById('btn-landing-dashboard').onclick = () => this.showApp();
+    this.btnGetStarted.onclick = () => this.showAuth('signup');
+
+    // Toggle Auth Forms
+    document.getElementById('btn-show-signup').onclick = () => {
+      this.loginForm.classList.add('hidden');
+      this.signupForm.classList.remove('hidden');
+    };
+    document.getElementById('btn-show-login').onclick = () => {
+      this.signupForm.classList.add('hidden');
+      this.loginForm.classList.remove('hidden');
+    };
+
+    // Auth Actions
     document.getElementById('btn-login').onclick = () => this.login();
     document.getElementById('btn-signup').onclick = () => this.signup();
 
@@ -118,7 +133,33 @@ class AuthManager {
     document.getElementById('btn-save-settings').onclick = () => this.saveSettings();
 
     if (this.currentUser) {
-      this.showApp();
+      this.updateLandingState(true);
+    }
+  }
+
+  showAuth(mode) {
+    this.authSection.classList.remove('hidden');
+    if (mode === 'login') {
+      this.loginForm.classList.remove('hidden');
+      this.signupForm.classList.add('hidden');
+    } else {
+      this.signupForm.classList.remove('hidden');
+      this.loginForm.classList.add('hidden');
+    }
+    this.authSection.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  updateLandingState(isLoggedIn) {
+    if (isLoggedIn) {
+      this.navActions.classList.add('hidden');
+      this.navDashboard.classList.remove('hidden');
+      this.btnGetStarted.classList.add('hidden');
+      this.btnLandingDashboard.classList.remove('hidden');
+    } else {
+      this.navActions.classList.remove('hidden');
+      this.navDashboard.classList.add('hidden');
+      this.btnGetStarted.classList.remove('hidden');
+      this.btnLandingDashboard.classList.add('hidden');
     }
   }
 
@@ -186,7 +227,7 @@ class AuthManager {
   }
 
   showApp() {
-    this.overlay.classList.add('hidden');
+    this.landingPage.classList.add('hidden');
     document.getElementById('sidebar').classList.remove('hidden');
     document.getElementById('main-stage').classList.remove('hidden');
     

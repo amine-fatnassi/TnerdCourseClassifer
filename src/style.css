@@ -734,6 +734,126 @@ video {
   animation: toastOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+/* Landing Page Styling */
+.landing-page {
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow-y: auto;
+  background: radial-gradient(circle at top right, rgba(138, 112, 255, 0.05), transparent),
+              radial-gradient(circle at bottom left, rgba(92, 77, 255, 0.05), transparent),
+              var(--bg-dark);
+}
+
+.landing-nav {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.landing-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem 5rem 2rem;
+}
+
+.hero-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4rem;
+  min-height: 80vh;
+}
+
+.hero-text {
+  flex: 1;
+  text-align: left;
+}
+
+.badge {
+  display: inline-block;
+  background: rgba(138, 112, 255, 0.1);
+  color: var(--accent-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(138, 112, 255, 0.2);
+}
+
+.hero-text h1 {
+  font-size: 4rem;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  font-weight: 800;
+}
+
+.gradient-text {
+  background: linear-gradient(to right, var(--accent-primary), #fff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-text p {
+  font-size: 1.2rem;
+  color: var(--text-dim);
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 1rem;
+}
+
+.hero-btn {
+  width: auto;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+}
+
+.hero-visual {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-visual img {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 32px;
+  box-shadow: 0 50px 100px rgba(0,0,0,0.5), 0 0 50px var(--accent-glow);
+  border: 1px solid var(--glass-border);
+}
+
+.floating {
+  animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
+.auth-section {
+  padding: 5rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
 /* Utilities */
 .hidden { display: none !important; }
 

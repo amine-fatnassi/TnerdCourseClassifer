@@ -9,49 +9,77 @@
   </head>
   <body>
     <div id="app">
-      <!-- Auth / Landing Overlay -->
-      <div id="auth-overlay" class="overlay">
-        <div class="auth-card fade-in">
-          <div class="logo-container" style="justify-content: center; margin-bottom: 1rem;">
+      <!-- Landing Page -->
+      <div id="landing-page" class="overlay landing-page">
+        <nav class="landing-nav">
+          <div class="logo-container">
             <div class="logo-icon">T</div>
-            <div class="logo-text" style="font-size: 2rem;">T-NERD</div>
+            <div class="logo-text">T-NERD</div>
           </div>
-          
-          <div id="auth-login">
-            <h1>Welcome Back</h1>
-            <p>Sign in to continue your learning journey.</p>
-            <div class="form-group">
-              <label>Email Address</label>
-              <input type="email" id="login-email" placeholder="name@example.com" value="demo@tnerd.com" />
-            </div>
-            <div class="form-group password-group">
-              <label>Password</label>
-              <input type="password" id="login-password" placeholder="••••••••" value="password123" />
-              <button class="toggle-password" data-target="login-password">👁️</button>
-            </div>
-            <button id="btn-login" class="primary-btn">Sign In</button>
-            <button id="btn-show-signup" class="text-btn">Don't have an account? Sign Up</button>
+          <div class="nav-actions" id="landing-nav-actions">
+            <button id="btn-nav-login" class="text-btn">Login</button>
+            <button id="btn-nav-signup" class="primary-btn" style="width: auto; padding: 0.6rem 1.5rem; margin-top: 0;">Sign Up</button>
           </div>
+          <div class="nav-actions hidden" id="landing-nav-dashboard">
+            <button id="btn-nav-dashboard" class="primary-btn" style="width: auto; padding: 0.6rem 1.5rem; margin-top: 0;">Go to Dashboard</button>
+          </div>
+        </nav>
 
-          <div id="auth-signup" class="hidden">
-            <h1>Create Account</h1>
-            <p>Join T-NERD and organize your courses today.</p>
-            <div class="form-group">
-              <label>Full Name</label>
-              <input type="text" id="signup-name" placeholder="John Doe" />
+        <div class="landing-content">
+          <section class="hero-section">
+            <div class="hero-text">
+              <span class="badge">Next-Gen Learning</span>
+              <h1>The Ultimate Local Course <span class="gradient-text">Organizer</span></h1>
+              <p>Turn your messy folder of tutorials into a premium, organized learning platform. Progress tracking, multi-course support, and a sleek interface—all from your local files.</p>
+              <div class="hero-ctas">
+                <button id="btn-get-started" class="primary-btn hero-btn">Get Started for Free</button>
+                <button id="btn-landing-dashboard" class="primary-btn hero-btn hidden">Continue Learning</button>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Email Address</label>
-              <input type="email" id="signup-email" placeholder="name@example.com" />
+            <div class="hero-visual">
+              <img src="/public/welcome_hero.png" alt="T-NERD Dashboard" class="floating" />
             </div>
-            <div class="form-group password-group">
-              <label>Password</label>
-              <input type="password" id="signup-password" placeholder="••••••••" />
-              <button class="toggle-password" data-target="signup-password">👁️</button>
+          </section>
+
+          <section id="auth-section" class="auth-section hidden fade-in">
+            <div class="auth-card">
+              <div id="auth-login">
+                <h1>Welcome Back</h1>
+                <p>Sign in to continue your learning journey.</p>
+                <div class="form-group">
+                  <label>Email Address</label>
+                  <input type="email" id="login-email" placeholder="name@example.com" value="demo@tnerd.com" />
+                </div>
+                <div class="form-group password-group">
+                  <label>Password</label>
+                  <input type="password" id="login-password" placeholder="••••••••" value="password123" />
+                  <button class="toggle-password" data-target="login-password">👁️</button>
+                </div>
+                <button id="btn-login" class="primary-btn">Sign In</button>
+                <button id="btn-show-signup" class="text-btn">Don't have an account? Sign Up</button>
+              </div>
+
+              <div id="auth-signup" class="hidden">
+                <h1>Create Account</h1>
+                <p>Join T-NERD and organize your courses today.</p>
+                <div class="form-group">
+                  <label>Full Name</label>
+                  <input type="text" id="signup-name" placeholder="John Doe" />
+                </div>
+                <div class="form-group">
+                  <label>Email Address</label>
+                  <input type="email" id="signup-email" placeholder="name@example.com" />
+                </div>
+                <div class="form-group password-group">
+                  <label>Password</label>
+                  <input type="password" id="signup-password" placeholder="••••••••" />
+                  <button class="toggle-password" data-target="signup-password">👁️</button>
+                </div>
+                <button id="btn-signup" class="primary-btn">Create Account</button>
+                <button id="btn-show-login" class="text-btn">Already have an account? Sign In</button>
+              </div>
             </div>
-            <button id="btn-signup" class="primary-btn">Create Account</button>
-            <button id="btn-show-login" class="text-btn">Already have an account? Sign In</button>
-          </div>
+          </section>
         </div>
       </div>
 
