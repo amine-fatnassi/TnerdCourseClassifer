@@ -38,6 +38,16 @@ class AuthManager {
       this.loginForm.classList.remove('hidden');
     };
 
+    // Password Toggles
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+      btn.onclick = () => {
+        const input = document.getElementById(btn.getAttribute('data-target'));
+        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+        input.setAttribute('type', type);
+        btn.innerText = type === 'password' ? '👁️' : '🔒';
+      };
+    });
+
     // Actions
     document.getElementById('btn-login').onclick = () => this.login();
     document.getElementById('btn-signup').onclick = () => this.signup();
@@ -99,24 +109,28 @@ class AuthManager {
 class CourseManager {
   constructor(user) {
     this.user = user;
-    this.currentCourseId = null;
-    this.courseData = null;
+    this.activeCourseId = null;
+    this.activeCourseData = null;
     
     this.initElements();
     this.initListeners();
+    this.renderCourseList();
   }
 
   initElements() {
     this.btnBrowse = document.getElementById('btn-browse');
     this.dirInput = document.getElementById('dir-input');
     this.courseTree = document.getElementById('course-tree');
+    this.courseListEl = document.getElementById('course-list');
     this.videoPlayer = document.getElementById('video-player');
     this.videoPlaceholder = document.getElementById('video-placeholder');
+    this.videoControls = document.getElementById('video-controls');
     this.lessonTitle = document.getElementById('current-lesson-title');
     this.breadcrumbs = document.getElementById('lesson-breadcrumbs');
     this.progressFg = document.getElementById('progress-fg');
     this.progressPercent = document.getElementById('progress-percent');
     this.searchInput = document.getElementById('search-input');
+    this.btnRename = document.getElementById('btn-rename-course');
   }
 
   initListeners() {
@@ -133,6 +147,25 @@ class CourseManager {
     this.searchInput.oninput = (e) => this.filterLessons(e.target.value);
     
     this.videoPlayer.ontimeupdate = () => this.handleTimeUpdate();
+
+    // Custom Controls
+    document.getElementById('btn-skip-back').onclick = () => this.videoPlayer.currentTime -= 10;
+    document.getElementById('btn-skip-forward').onclick = () => this.videoPlayer.currentTime += 10;
+    document.getElementById('btn-fullscreen').onclick = () => {
+      if (this.videoPlayer.requestFullscreen) this.videoPlayer.requestFullscreen();
+      else if (this.videoPlayer.webkitRequestFullscreen) this.videoPlayer.webkitRequestFullscreen();
+    };
+
+    // Rename
+    this.btnRename.onclick = () => {
+      const newName = prompt('Enter new course name:', this.user.courses[this.activeCourseId].displayName || this.activeCourseId);
+      if (newName) {
+        this.user.courses[this.activeCourseId].displayName = newName;
+        this.lessonTitle.innerText = newName;
+        this.renderCourseList();
+        window.authManager.saveUserData(this.user);
+      }
+    };
   }
 
   async scanDirectoryAPI(handle) {
@@ -157,12 +190,12 @@ class CourseManager {
       }
     }
     sections.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
-    this.loadCourse(handle.name, sections);
+    this.addCourse(handle.name, sections);
   }
 
   scanFilesFallback(files) {
     if (files.length === 0) return;
-    const courseName = files[0].webkitRelativePath.split('/')[0];
+    const courseId = files[0].webkitRelativePath.split('/')[0];
     const sectionsMap = {};
 
     files.forEach(file => {
@@ -184,25 +217,69 @@ class CourseManager {
       return s;
     });
     sections.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
-    this.loadCourse(courseName, sections);
+    this.addCourse(courseId, sections);
   }
 
-  loadCourse(name, sections) {
-    this.currentCourseId = name;
-    this.courseData = { name, sections };
+  addCourse(id, sections) {
+    if (!this.user.courses[id]) {
+      this.user.courses[id] = { 
+        displayName: id, 
+        completed: {}, 
+        positions: {}, 
+        sections: sections 
+      };
+    } else {
+      // Update sections if already exists
+      this.user.courses[id].sections = sections;
+    }
     
-    // Initialize user's progress for this course if not exists
-    if (!this.user.courses[name]) {
-      this.user.courses[name] = { completed: {}, positions: {} };
+    window.authManager.saveUserData(this.user);
+    this.renderCourseList();
+    this.selectCourse(id);
+  }
+
+  renderCourseList() {
+    this.courseListEl.innerHTML = '';
+    const courseIds = Object.keys(this.user.courses);
+    
+    if (courseIds.length === 0) {
+      this.courseListEl.innerHTML = '<div style="padding: 1rem; color: var(--text-dim); font-size: 0.8rem;">No courses added yet.</div>';
+      return;
     }
 
+    courseIds.forEach(id => {
+      const course = this.user.courses[id];
+      const tab = document.createElement('div');
+      tab.className = `course-tab ${this.activeCourseId === id ? 'active' : ''}`;
+      tab.innerHTML = `<span>📚</span> <span>${course.displayName || id}</span>`;
+      tab.onclick = () => this.selectCourse(id);
+      this.courseListEl.appendChild(tab);
+    });
+  }
+
+  selectCourse(id) {
+    this.activeCourseId = id;
+    const course = this.user.courses[id];
+    
+    this.activeCourseData = course;
+    this.lessonTitle.innerText = course.displayName || id;
+    this.breadcrumbs.innerText = `Courses / ${course.displayName || id}`;
+    this.btnRename.classList.remove('hidden');
+    
     this.renderTree();
+    this.renderCourseList();
     this.updateProgress();
+    
+    // Hide video if switching
+    this.videoPlayer.classList.add('hidden');
+    this.videoControls.classList.add('hidden');
+    this.videoPlaceholder.classList.remove('hidden');
+    this.videoPlayer.pause();
   }
 
   renderTree() {
     this.courseTree.innerHTML = '';
-    this.courseData.sections.forEach(section => {
+    this.activeCourseData.sections.forEach(section => {
       const sectionEl = document.createElement('div');
       sectionEl.className = 'section';
       
@@ -215,7 +292,7 @@ class CourseManager {
       
       section.lessons.forEach(lesson => {
         const lessonEl = document.createElement('div');
-        const isCompleted = this.user.courses[this.currentCourseId].completed[lesson.fullName];
+        const isCompleted = this.user.courses[this.activeCourseId].completed[lesson.fullName];
         lessonEl.className = `lesson-item ${isCompleted ? 'completed' : ''}`;
         lessonEl.innerHTML = `<span>${isCompleted ? '✓' : '○'}</span> ${lesson.name}`;
         
@@ -234,11 +311,11 @@ class CourseManager {
     document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('active'));
     element.classList.add('active');
 
-    this.lessonTitle.innerText = lesson.name;
-    this.breadcrumbs.innerText = `Courses / ${this.currentCourseId} / ${section.name}`;
+    this.breadcrumbs.innerText = `Courses / ${this.activeCourseData.displayName || this.activeCourseId} / ${section.name}`;
     
     this.videoPlaceholder.classList.add('hidden');
     this.videoPlayer.classList.remove('hidden');
+    this.videoControls.classList.remove('hidden');
 
     let url;
     if (lesson.type === 'handle') {
@@ -252,7 +329,7 @@ class CourseManager {
     this.currentLesson = lesson;
     this.currentLessonElement = element;
 
-    const lastPos = this.user.courses[this.currentCourseId].positions[lesson.fullName] || 0;
+    const lastPos = this.user.courses[this.activeCourseId].positions[lesson.fullName] || 0;
     this.videoPlayer.currentTime = lastPos;
     this.videoPlayer.play();
   }
@@ -260,19 +337,17 @@ class CourseManager {
   handleTimeUpdate() {
     if (!this.currentLesson) return;
     const key = this.currentLesson.fullName;
-    this.user.courses[this.currentCourseId].positions[key] = this.videoPlayer.currentTime;
+    this.user.courses[this.activeCourseId].positions[key] = this.videoPlayer.currentTime;
     
-    // Auto-complete at 90%
-    if (this.videoPlayer.currentTime / this.videoPlayer.duration > 0.9 && !this.user.courses[this.currentCourseId].completed[key]) {
+    if (this.videoPlayer.currentTime / this.videoPlayer.duration > 0.9 && !this.user.courses[this.activeCourseId].completed[key]) {
       this.markCompleted(key);
     }
 
-    // Save every 5 seconds or so (throttled by browser usually)
     window.authManager.saveUserData(this.user);
   }
 
   markCompleted(key) {
-    this.user.courses[this.currentCourseId].completed[key] = true;
+    this.user.courses[this.activeCourseId].completed[key] = true;
     if (this.currentLessonElement) {
       this.currentLessonElement.classList.add('completed');
       this.currentLessonElement.querySelector('span').innerText = '✓';
@@ -282,8 +357,9 @@ class CourseManager {
   }
 
   updateProgress() {
-    const total = this.courseData.sections.reduce((acc, s) => acc + s.lessons.length, 0);
-    const completed = Object.keys(this.user.courses[this.currentCourseId].completed).length;
+    if (!this.activeCourseData) return;
+    const total = this.activeCourseData.sections.reduce((acc, s) => acc + s.lessons.length, 0);
+    const completed = Object.keys(this.user.courses[this.activeCourseId].completed).length;
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     this.progressPercent.innerText = `${percent}%`;
@@ -297,17 +373,15 @@ class CourseManager {
       const text = el.innerText.toLowerCase();
       el.classList.toggle('hidden', !text.includes(q));
     });
-    // Auto-expand sections that have visible lessons
     document.querySelectorAll('.section').forEach(sec => {
       const list = sec.querySelector('.lesson-list');
       const hasVisible = list.querySelectorAll('.lesson-item:not(.hidden)').length > 0;
-      if (query) {
-        list.classList.toggle('active', hasVisible);
-      }
+      if (query) list.classList.toggle('active', hasVisible);
     });
   }
 }
 
 // Start Auth
 window.authManager = new AuthManager();
+
 
