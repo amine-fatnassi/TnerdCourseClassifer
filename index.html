@@ -176,11 +176,22 @@
 
             <div class="video-section">
               <div class="video-wrapper">
-                <video id="video-player" controls preload="auto"></video>
+                <video id="video-player" preload="auto"></video>
                 <div id="video-controls" class="custom-controls hidden">
-                  <button id="btn-skip-back" title="Back 10s">⏪ 10s</button>
-                  <button id="btn-skip-forward" title="Forward 10s">10s ⏩</button>
-                  <button id="btn-fullscreen" title="Fullscreen">🔲 Fullscreen</button>
+                  <div class="progress-bar-container">
+                    <div id="video-progress" class="progress-bar-fg"></div>
+                  </div>
+                  <div class="controls-main">
+                    <div class="controls-left">
+                      <button id="btn-play-pause" title="Play/Pause">▶️</button>
+                      <button id="btn-skip-back" title="Back 10s">⏪ 10s</button>
+                      <button id="btn-skip-forward" title="Forward 10s">10s ⏩</button>
+                      <span class="time-display"><span id="curr-time">0:00</span> / <span id="dur-time">0:00</span></span>
+                    </div>
+                    <div class="controls-right">
+                      <button id="btn-fullscreen" title="Fullscreen">🔲</button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

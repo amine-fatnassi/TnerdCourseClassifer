@@ -189,6 +189,13 @@ class CourseManager {
     // Stats
     this.statCourses = document.getElementById('stat-courses');
     this.statCompleted = document.getElementById('stat-completed');
+
+    // Video Custom Logic Elements
+    this.btnPlayPause = document.getElementById('btn-play-pause');
+    this.videoProgress = document.getElementById('video-progress');
+    this.progressBar = document.querySelector('.progress-bar-container');
+    this.currTimeEl = document.getElementById('curr-time');
+    this.durTimeEl = document.getElementById('dur-time');
   }
 
   initListeners() {
@@ -206,7 +213,19 @@ class CourseManager {
 
     this.searchInput.oninput = (e) => this.filterLessons(e.target.value);
     
-    this.videoPlayer.ontimeupdate = () => this.handleTimeUpdate();
+    this.videoPlayer.ontimeupdate = () => {
+      this.handleTimeUpdate();
+      this.updateVideoProgress();
+    };
+
+    this.videoPlayer.onloadedmetadata = () => {
+      this.durTimeEl.innerText = this.formatTime(this.videoPlayer.duration);
+    };
+
+    this.btnPlayPause.onclick = () => this.togglePlay();
+    this.videoPlayer.onclick = () => this.togglePlay();
+
+    this.progressBar.onclick = (e) => this.seekVideo(e);
 
     // Custom Controls
     document.getElementById('btn-skip-back').onclick = () => this.videoPlayer.currentTime -= 10;
@@ -458,6 +477,34 @@ class CourseManager {
       const hasVisible = list.querySelectorAll('.lesson-item:not(.hidden)').length > 0;
       if (query) list.classList.toggle('active', hasVisible);
     });
+  }
+
+  togglePlay() {
+    if (this.videoPlayer.paused) {
+      this.videoPlayer.play();
+      this.btnPlayPause.innerText = '⏸️';
+    } else {
+      this.videoPlayer.pause();
+      this.btnPlayPause.innerText = '▶️';
+    }
+  }
+
+  updateVideoProgress() {
+    const percent = (this.videoPlayer.currentTime / this.videoPlayer.duration) * 100;
+    this.videoProgress.style.width = `${percent}%`;
+    this.currTimeEl.innerText = this.formatTime(this.videoPlayer.currentTime);
+  }
+
+  seekVideo(e) {
+    const rect = this.progressBar.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    this.videoPlayer.currentTime = pos * this.videoPlayer.duration;
+  }
+
+  formatTime(seconds) {
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
   }
 }
 
