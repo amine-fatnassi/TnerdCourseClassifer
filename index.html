@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Course Classifier | Premium Learning Experience</title>
+    <meta name="description" content="A high-end course organizer and video player for local course materials. Track your progress with a neon cyberpunk interface." />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Landing Screen -->
+      <div id="landing" class="landing">
+        <h1>COURSE CLASSIFIER</h1>
+        <p>Elevate your learning experience. Browse your local course folder and organize your journey with a premium interface.</p>
+        <button id="btn-browse" class="neon-btn pulse">Browse Course Folder</button>
+        <input type="file" id="dir-input" webkitdirectory directory multiple class="hidden" />
+      </div>
+
+      <!-- Main Application UI -->
+      <aside class="sidebar hidden" id="sidebar">
+        <div class="sidebar-header">
+          <h1>T-NERD</h1>
+          <div class="progress-info">
+            <p id="course-progress-text">0% Complete</p>
+            <div class="progress-container">
+              <div id="course-progress-bar" class="progress-bar"></div>
+            </div>
+          </div>
+        </div>
+        <div class="course-content" id="course-tree">
+          <!-- Sections and lessons will be injected here -->
+        </div>
+      </aside>
+
+      <main class="main-stage hidden" id="main-stage">
+        <header class="content-header">
+          <div class="lesson-info">
+            <h2 id="current-lesson-title">Select a Lesson</h2>
+            <p id="current-section-title">N/A</p>
+          </div>
+          <div class="actions">
+            <button id="btn-mark-done" class="neon-btn small hidden">Mark as Done</button>
+          </div>
+        </header>
+
+        <div class="video-container">
+          <video id="video-player" controls preload="auto"></video>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
