@@ -343,14 +343,28 @@ class CourseManager {
     const course = this.user.courses[id];
     
     this.activeCourseData = course;
-    this.lessonTitle.innerText = course.displayName || id;
-    this.breadcrumbs.innerText = `Courses / ${course.displayName || id}`;
+    
+    const isAvailable = course.sections && course.sections.length > 0;
+    const displayName = course.displayName || id;
+    
+    this.lessonTitle.innerText = isAvailable ? displayName : `${displayName} (Course Not Found)`;
+    this.breadcrumbs.innerText = `Courses / ${displayName}`;
     this.btnRename.classList.remove('hidden');
     
-    this.renderTree();
+    if (isAvailable) {
+      this.renderTree();
+    } else {
+      this.courseTree.innerHTML = `
+        <div style="padding: 2rem; text-align: center; color: var(--text-dim);">
+          <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">🔍</span>
+          <p>Files not found in local storage session.</p>
+          <p style="font-size: 0.8rem; margin-top: 0.5rem;">Please use "Add New Course" to re-sync this folder.</p>
+        </div>
+      `;
+    }
+    
     this.renderCourseList();
     this.updateProgress();
-    
     this.showHome();
   }
 
@@ -425,12 +439,23 @@ class CourseManager {
     }
 
     this.videoPlayer.src = url;
+    this.videoPlayer.load();
+    
+    this.videoPlayer.oncanplay = () => {
+      this.videoPlayer.play().catch(e => console.error("Play failed:", e));
+    };
+
+    this.videoPlayer.onerror = (e) => {
+      console.error("Video Error:", e);
+      alert("Error loading video. Please ensure the course folder is still accessible.");
+    };
+
+    this.btnPlayPause.innerText = '⏸';
     this.currentLesson = lesson;
     this.currentLessonElement = element;
 
     const lastPos = this.user.courses[this.activeCourseId].positions[lesson.fullName] || 0;
     this.videoPlayer.currentTime = lastPos;
-    this.videoPlayer.play();
   }
 
   handleTimeUpdate() {
@@ -482,10 +507,10 @@ class CourseManager {
   togglePlay() {
     if (this.videoPlayer.paused) {
       this.videoPlayer.play();
-      this.btnPlayPause.innerText = '⏸️';
+      this.btnPlayPause.innerText = '⏸';
     } else {
       this.videoPlayer.pause();
-      this.btnPlayPause.innerText = '▶️';
+      this.btnPlayPause.innerText = '▶';
     }
   }
 
