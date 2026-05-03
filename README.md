@@ -1,63 +1,31 @@
-# 🎬 Course Classifier
+# T-NERD | Premium Course Classifier
 
-A premium, high-performance web application designed to organize and watch local course materials with ease. Built with a sleek **Neon Cyberpunk** aesthetic, it provides an immersive learning experience directly in your browser.
+![T-NERD Logo](/public/tnerd_logo.png)
 
-![Course Classifier UI](./src/assets/hero.png)
+## Overview
+**T-NERD** is a next-generation local course organizer and video player. Built with a premium **Purple Glassmorphism** design, it transforms your local course folders into a high-end learning experience similar to professional platforms like Udemy or Coursera.
 
-## ✨ Features
+![T-NERD Dashboard](/public/tnerd_mockup.png)
 
-- **📁 Local Folder Access**: Leverage the **File System Access API** to browse your local course folders without uploading any data.
-- **🗂️ Smart Auto-Structuring**: Automatically categorizes your files into **Sections** (folders) and **Lessons** (mp4 files).
-- **⏱️ Progress Tracking**: 
-  - **Resume Playback**: Saves your exact video timestamp using `localStorage`.
-  - **Auto-Completion**: Marks lessons as completed once you finish watching.
-  - **Course Progress**: A dynamic progress bar showing your journey status.
-- **🎨 Premium Aesthetics**:
-  - **Neon Red & Black Theme**: High-contrast, futuristic visuals.
-  - **Glassmorphism**: Sleek, blurred sidebars and overlays.
-  - **Smooth Animations**: Pulse effects and elegant transitions.
-- **🌐 Cross-Browser Fallback**: Works on all modern browsers (Chrome, Edge, Firefox, Safari) using smart detection.
+## Key Features
+- **Premium Design:** Stunning glassmorphism UI with smooth animations and a curated purple/indigo palette.
+- **User Authentication:** Multi-user support with secure sign-in and sign-up (local-first storage).
+- **Intelligent Scanning:** Effortlessly parse local directories into structured sections and lessons.
+- **Progress Persistence:** Automatic tracking of completed lessons and video playback positions, remembered per user.
+- **Search & Filter:** Quickly find lessons across large courses with instant filtering.
+- **Circular Progress:** Visual feedback on your learning journey with modern circular indicators.
 
-## 🚀 Getting Started
+## Technology Stack
+- **Frontend:** Vanilla JavaScript, HTML5, CSS3 (Custom Glassmorphism).
+- **Build Tool:** Vite.
+- **Storage:** LocalStorage (User profiles & Course progress).
 
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v16 or higher)
-- [npm](https://www.npmjs.com/)
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/amine-fatnassi/TnerdCourseClassifer.git
-   cd TnerdCourseClassifer
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
-
-4. **Open your browser:**
-   Navigate to `http://localhost:5173`
-
-## 🛠️ Tech Stack
-
-- **Core**: Vanilla JavaScript (ESM)
-- **Styling**: Vanilla CSS (Cyberpunk System)
-- **Bundler**: [Vite](https://vitejs.dev/)
-- **Storage**: Browser `localStorage`
-- **APIs**: File System Access API + HTML5 Video API
-
-## 🛡️ Privacy
-
-Your privacy is paramount. Course Classifier operates entirely on your local machine. No course data, video files, or metadata are ever uploaded to a server.
+## Getting Started
+1. **Clone the repository.**
+2. **Install dependencies:** `npm install`
+3. **Run the app:** `npm run dev`
+4. **Sign In:** Use the default `demo@tnerd.com` / `password123` or create a new account.
+5. **Load Course:** Click "Browse Folder" and select your local course directory.
 
 ---
-
-Built with ❤️ by [Antigravity AI](https://github.com/amine-fatnassi)
+Built with ❤️ by T-NERD Team.
