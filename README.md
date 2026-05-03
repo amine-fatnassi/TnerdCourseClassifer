@@ -2,7 +2,7 @@
 
 A premium, high-performance web application designed to organize and watch local course materials with ease. Built with a sleek **Neon Cyberpunk** aesthetic, it provides an immersive learning experience directly in your browser.
 
-![Course Classifier UI](https://via.placeholder.com/800x450.png?text=Course+Classifier+Neon+UI) <!-- Note: I'll mention the generated designs in the description -->
+![Course Classifier UI](./src/assets/hero.png)
 
 ## ✨ Features
 
