@@ -75,6 +75,7 @@ class AuthManager {
 
   initUI() {
     this.landingPage = document.getElementById('landing-page');
+    this.heroSection = document.querySelector('.hero-section');
     this.authSection = document.getElementById('auth-section');
     this.loginForm = document.getElementById('auth-login');
     this.signupForm = document.getElementById('auth-signup');
@@ -83,6 +84,9 @@ class AuthManager {
     this.navDashboard = document.getElementById('landing-nav-dashboard');
     this.btnGetStarted = document.getElementById('btn-get-started');
     this.btnLandingDashboard = document.getElementById('btn-landing-dashboard');
+    this.btnBack = document.getElementById('btn-auth-back');
+
+    this.btnBack.onclick = () => this.hideAuth();
 
     // Password Toggles
     document.querySelectorAll('.toggle-password').forEach(btn => {
@@ -138,6 +142,7 @@ class AuthManager {
   }
 
   showAuth(mode) {
+    this.heroSection.classList.add('hidden');
     this.authSection.classList.remove('hidden');
     if (mode === 'login') {
       this.loginForm.classList.remove('hidden');
@@ -146,7 +151,12 @@ class AuthManager {
       this.signupForm.classList.remove('hidden');
       this.loginForm.classList.add('hidden');
     }
-    this.authSection.scrollIntoView({ behavior: 'smooth' });
+    window.scrollTo(0, 0);
+  }
+
+  hideAuth() {
+    this.authSection.classList.add('hidden');
+    this.heroSection.classList.remove('hidden');
   }
 
   updateLandingState(isLoggedIn) {
