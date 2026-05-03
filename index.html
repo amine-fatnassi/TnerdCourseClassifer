@@ -104,39 +104,60 @@
         </div>
 
         <div class="content-card">
-          <div class="content-header">
-            <div class="lesson-meta">
-              <div class="breadcrumbs" id="lesson-breadcrumbs">Select a course from library</div>
-              <div class="title-edit-group">
-                <h2 id="current-lesson-title">Welcome to T-NERD</h2>
-                <button id="btn-rename-course" class="icon-btn hidden" title="Rename Course">✏️</button>
+          <!-- Home Screen (Visible by default) -->
+          <div id="home-screen" class="home-view fade-in">
+            <div class="welcome-content">
+              <h1 id="welcome-message">Welcome back, Explorer!</h1>
+              <p>Ready to continue your learning journey? Select a course from your library to get started.</p>
+              <div class="hero-image">
+                <img src="/public/welcome_hero.png" alt="Learning" />
               </div>
-            </div>
-            <div class="progress-circle-container">
-              <svg class="progress-circle" width="80" height="80">
-                <circle class="bg" cx="40" cy="40" r="36"></circle>
-                <circle class="fg" id="progress-fg" cx="40" cy="40" r="36"></circle>
-              </svg>
-              <div class="percentage-label" id="progress-percent">0%</div>
+              <div class="stats-row">
+                <div class="stat-card">
+                  <span class="stat-value" id="stat-courses">0</span>
+                  <span class="stat-label">Courses</span>
+                </div>
+                <div class="stat-card">
+                  <span class="stat-value" id="stat-completed">0</span>
+                  <span class="stat-label">Lessons Done</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="video-section">
-            <div class="video-wrapper">
-              <video id="video-player" controls preload="auto"></video>
-              <div id="video-controls" class="custom-controls hidden">
-                <button id="btn-skip-back" title="Back 10s">⏪ 10s</button>
-                <button id="btn-skip-forward" title="Forward 10s">10s ⏩</button>
-                <button id="btn-fullscreen" title="Fullscreen">🔲 Fullscreen</button>
+          <!-- Lesson View (Hidden by default) -->
+          <div id="lesson-view" class="lesson-view hidden">
+            <div class="content-header">
+              <div class="lesson-meta">
+                <div class="breadcrumbs" id="lesson-breadcrumbs">Select a course from library</div>
+                <div class="title-edit-group">
+                  <h2 id="current-lesson-title">Welcome to T-NERD</h2>
+                  <button id="btn-rename-course" class="icon-btn hidden" title="Rename Course">✏️</button>
+                </div>
+              </div>
+              <div class="progress-circle-container">
+                <svg class="progress-circle" width="80" height="80">
+                  <circle class="bg" cx="40" cy="40" r="36"></circle>
+                  <circle class="fg" id="progress-fg" cx="40" cy="40" r="36"></circle>
+                </svg>
+                <div class="percentage-label" id="progress-percent">0%</div>
               </div>
             </div>
-            <div id="video-placeholder" style="display: flex; flex-direction: column; align-items: center; gap: 1rem; color: var(--text-dim);">
-              <span style="font-size: 4rem;">🎬</span>
-              <p>Select a lesson to start learning.</p>
+
+            <div class="video-section">
+              <div class="video-wrapper">
+                <video id="video-player" controls preload="auto"></video>
+                <div id="video-controls" class="custom-controls hidden">
+                  <button id="btn-skip-back" title="Back 10s">⏪ 10s</button>
+                  <button id="btn-skip-forward" title="Forward 10s">10s ⏩</button>
+                  <button id="btn-fullscreen" title="Fullscreen">🔲 Fullscreen</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </main>
+
 
     </div>
     <script type="module" src="/src/main.js"></script>

@@ -91,6 +91,7 @@ class AuthManager {
     document.getElementById('sidebar').classList.remove('hidden');
     document.getElementById('main-stage').classList.remove('hidden');
     document.getElementById('user-avatar').innerText = this.currentUser.name.substring(0, 2).toUpperCase();
+    document.getElementById('welcome-message').innerText = `Welcome back, ${this.currentUser.name.split(' ')[0]}!`;
     
     // Initialize Course Manager once logged in
     window.courseManager = new CourseManager(this.currentUser);
@@ -123,7 +124,8 @@ class CourseManager {
     this.courseTree = document.getElementById('course-tree');
     this.courseListEl = document.getElementById('course-list');
     this.videoPlayer = document.getElementById('video-player');
-    this.videoPlaceholder = document.getElementById('video-placeholder');
+    this.homeScreen = document.getElementById('home-screen');
+    this.lessonView = document.getElementById('lesson-view');
     this.videoControls = document.getElementById('video-controls');
     this.lessonTitle = document.getElementById('current-lesson-title');
     this.breadcrumbs = document.getElementById('lesson-breadcrumbs');
@@ -131,9 +133,16 @@ class CourseManager {
     this.progressPercent = document.getElementById('progress-percent');
     this.searchInput = document.getElementById('search-input');
     this.btnRename = document.getElementById('btn-rename-course');
+    this.navHome = document.getElementById('nav-home');
+    
+    // Stats
+    this.statCourses = document.getElementById('stat-courses');
+    this.statCompleted = document.getElementById('stat-completed');
   }
 
   initListeners() {
+    this.navHome.onclick = () => this.showHome();
+
     this.btnBrowse.onclick = () => {
       if ('showDirectoryPicker' in window) {
         window.showDirectoryPicker().then(handle => this.scanDirectoryAPI(handle));
@@ -242,6 +251,8 @@ class CourseManager {
     this.courseListEl.innerHTML = '';
     const courseIds = Object.keys(this.user.courses);
     
+    this.updateStats();
+
     if (courseIds.length === 0) {
       this.courseListEl.innerHTML = '<div style="padding: 1rem; color: var(--text-dim); font-size: 0.8rem;">No courses added yet.</div>';
       return;
@@ -270,11 +281,28 @@ class CourseManager {
     this.renderCourseList();
     this.updateProgress();
     
-    // Hide video if switching
-    this.videoPlayer.classList.add('hidden');
-    this.videoControls.classList.add('hidden');
-    this.videoPlaceholder.classList.remove('hidden');
+    this.showHome();
+  }
+
+  showHome() {
+    this.homeScreen.classList.remove('hidden');
+    this.lessonView.classList.add('hidden');
     this.videoPlayer.pause();
+    this.updateStats();
+    
+    // Clear active lesson
+    document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('active'));
+  }
+
+  updateStats() {
+    const courseIds = Object.keys(this.user.courses);
+    this.statCourses.innerText = courseIds.length;
+    
+    let totalCompleted = 0;
+    courseIds.forEach(id => {
+      totalCompleted += Object.keys(this.user.courses[id].completed || {}).length;
+    });
+    this.statCompleted.innerText = totalCompleted;
   }
 
   renderTree() {
@@ -312,9 +340,10 @@ class CourseManager {
     element.classList.add('active');
 
     this.breadcrumbs.innerText = `Courses / ${this.activeCourseData.displayName || this.activeCourseId} / ${section.name}`;
+    this.lessonTitle.innerText = lesson.name;
     
-    this.videoPlaceholder.classList.add('hidden');
-    this.videoPlayer.classList.remove('hidden');
+    this.homeScreen.classList.add('hidden');
+    this.lessonView.classList.remove('hidden');
     this.videoControls.classList.remove('hidden');
 
     let url;
