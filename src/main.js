@@ -136,8 +136,25 @@ class AuthManager {
     document.getElementById('btn-close-settings').onclick = () => this.modal.classList.add('hidden');
     document.getElementById('btn-save-settings').onclick = () => this.saveSettings();
 
+    // Logo Navigation
+    document.getElementById('landing-logo').onclick = () => this.showLanding();
+    document.getElementById('app-logo').onclick = () => this.showLanding();
+
     if (this.currentUser) {
       this.updateLandingState(true);
+    }
+  }
+
+  showLanding() {
+    if (this.currentUser) {
+      this.landingPage.classList.remove('hidden');
+      document.getElementById('sidebar').classList.add('hidden');
+      document.getElementById('main-stage').classList.add('hidden');
+      this.authSection.classList.add('hidden');
+      this.heroSection.classList.remove('hidden');
+      this.updateLandingState(true);
+    } else {
+      location.reload();
     }
   }
 
@@ -438,10 +455,39 @@ class CourseManager {
       const course = this.user.courses[id];
       const tab = document.createElement('div');
       tab.className = `course-tab ${this.activeCourseId === id ? 'active' : ''}`;
-      tab.innerHTML = `<span>📚</span> <span>${course.displayName || id}</span>`;
-      tab.onclick = () => this.selectCourse(id);
+      
+      const titleSpan = document.createElement('span');
+      titleSpan.innerHTML = `📚 ${course.displayName || id}`;
+      titleSpan.style.flex = "1";
+      titleSpan.onclick = () => this.selectCourse(id);
+      
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-delete-course';
+      delBtn.innerHTML = '🗑️';
+      delBtn.title = 'Remove Course';
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        this.deleteCourse(id);
+      };
+      
+      tab.appendChild(titleSpan);
+      tab.appendChild(delBtn);
       this.courseListEl.appendChild(tab);
     });
+  }
+
+  deleteCourse(id) {
+    if (confirm(`Are you sure you want to remove "${this.user.courses[id].displayName || id}"?`)) {
+      delete this.user.courses[id];
+      if (this.activeCourseId === id) {
+        this.activeCourseId = null;
+        this.activeCourseData = null;
+        this.courseTree.innerHTML = '<div style="padding: 1rem; color: var(--text-dim); font-size: 0.8rem; text-align: center;">No course selected.</div>';
+      }
+      window.authManager.saveUserData(this.user);
+      this.renderCourseList();
+      window.ui.showToast('Course removed from library', 'info');
+    }
   }
 
   selectCourse(id) {
@@ -518,7 +564,18 @@ class CourseManager {
         list.appendChild(lessonEl);
       });
 
-      header.onclick = () => list.classList.toggle('active');
+      header.onclick = () => {
+        const isCurrentlyActive = list.classList.contains('active');
+        // Retract all others (optional, but requested "clicking again retracts")
+        // list.classList.toggle('active'); 
+        
+        // Improved toggle:
+        if (isCurrentlyActive) {
+          list.classList.remove('active');
+        } else {
+          list.classList.add('active');
+        }
+      };
       sectionEl.appendChild(header);
       sectionEl.appendChild(list);
       this.courseTree.appendChild(sectionEl);
