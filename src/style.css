@@ -1,15 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --bg-dark: #0a0b10;
-  --bg-card: rgba(20, 21, 28, 0.4);
   --accent-primary: #8a70ff;
   --accent-secondary: #5c4dff;
-  --accent-glow: rgba(138, 112, 255, 0.3);
-  --text-main: #f0f0f5;
-  --text-dim: #9499b0;
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --accent-glow: rgba(138, 112, 255, 0.4);
+  --bg-dark: #0a0b10;
+  --bg-card: rgba(20, 21, 28, 0.6);
   --glass-surface: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --text-main: #ffffff;
+  --text-dim: #a0a0ab;
+  --sidebar-width: 320px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -17,14 +18,15 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Outfit', sans-serif;
 }
 
 body {
-  font-family: 'Outfit', sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-main);
-  height: 100vh;
   overflow: hidden;
+  height: 100vh;
+  -webkit-font-smoothing: antialiased;
   display: flex;
 }
 
@@ -541,21 +543,26 @@ video {
 .toggle-password:hover { opacity: 1; }
 
 .primary-btn {
-  width: 100%;
   background: var(--accent-primary);
   color: white;
   border: none;
-  padding: 1rem;
+  padding: 0.8rem 1.5rem;
   border-radius: 12px;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: var(--transition);
-  margin-top: 1rem;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.primary-btn:hover { background: var(--accent-secondary); transform: translateY(-2px); }
+.primary-btn:hover {
+  background: var(--accent-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(138, 112, 255, 0.2);
+}
 
 .text-btn {
   width: 100%;
@@ -850,9 +857,26 @@ video {
 
 .nav-actions {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   align-items: center;
 }
+
+.nav-actions button {
+  white-space: nowrap;
+}
+
+.text-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: var(--transition);
+  padding: 0.5rem;
+}
+
+.text-btn:hover { color: #fff; }
 
 /* Utilities */
 .hidden { display: none !important; }
