@@ -14,17 +14,17 @@ class UIManager {
     this.promptCallback = null;
 
     this.btnPromptCancel.onclick = () => this.hidePrompt();
-    this.btnPromptOk.onclick = () => {
-      if (this.promptCallback) this.promptCallback(this.promptInput.value);
-      this.hidePrompt();
+    this.btnPromptOk.onclick = () => this.confirmPrompt();
+    this.promptInput.onkeydown = (e) => {
+      if (e.key === 'Enter') this.confirmPrompt();
+      if (e.key === 'Escape') this.hidePrompt();
     };
   }
 
   showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    toast.innerHTML = `<span>${message}</span>`;
     
     this.toastContainer.appendChild(toast);
     
@@ -40,6 +40,11 @@ class UIManager {
     this.promptCallback = callback;
     this.promptModal.classList.remove('hidden');
     this.promptInput.focus();
+  }
+
+  confirmPrompt() {
+    if (this.promptCallback) this.promptCallback(this.promptInput.value);
+    this.hidePrompt();
   }
 
   hidePrompt() {
@@ -92,9 +97,14 @@ class AuthManager {
     document.querySelectorAll('.toggle-password').forEach(btn => {
       btn.onclick = () => {
         const input = document.getElementById(btn.getAttribute('data-target'));
-        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-        input.setAttribute('type', type);
-        btn.innerText = type === 'password' ? '👁️' : '🔒';
+        const isPassword = input.getAttribute('type') === 'password';
+        input.setAttribute('type', isPassword ? 'text' : 'password');
+        const eyeIcon = btn.querySelector('.eye-icon');
+        if (eyeIcon) {
+          eyeIcon.innerHTML = isPassword
+            ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+            : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+        }
       };
     });
 
@@ -118,6 +128,8 @@ class AuthManager {
     // Auth Actions
     document.getElementById('btn-login').onclick = () => this.login();
     document.getElementById('btn-signup').onclick = () => this.signup();
+    document.getElementById('login-password').onkeydown = (e) => { if (e.key === 'Enter') this.login(); };
+    document.getElementById('signup-password').onkeydown = (e) => { if (e.key === 'Enter') this.signup(); };
 
     // User Dropdown & Settings
     this.avatar = document.getElementById('user-avatar');
@@ -141,7 +153,7 @@ class AuthManager {
     document.getElementById('app-logo').onclick = () => this.showLanding();
 
     if (this.currentUser) {
-      this.updateLandingState(true);
+      this.showApp();
     }
   }
 
@@ -153,8 +165,6 @@ class AuthManager {
       this.authSection.classList.add('hidden');
       this.heroSection.classList.remove('hidden');
       this.updateLandingState(true);
-    } else {
-      location.reload();
     }
   }
 
@@ -233,7 +243,7 @@ class AuthManager {
 
     this.users[email] = { name, email, password, courses: {} };
     localStorage.setItem('tnerd_users', JSON.stringify(this.users));
-    window.ui.showToast('Account created successfully! Welcome to T-NERD 🎉', 'success');
+    window.ui.showToast('Account created successfully! Welcome to T-NERD', 'success');
     this.signupForm.classList.add('hidden');
     this.loginForm.classList.remove('hidden');
   }
@@ -266,11 +276,72 @@ class AuthManager {
   }
 
   saveUserData(updatedUser) {
-    this.users[updatedUser.email] = updatedUser;
+    const cleaned = JSON.parse(JSON.stringify(updatedUser, (key, value) => {
+      if (key === 'handle' || key === 'file') return undefined;
+      return value;
+    }));
+    this.users[updatedUser.email] = cleaned;
     localStorage.setItem('tnerd_users', JSON.stringify(this.users));
-    localStorage.setItem('tnerd_session', JSON.stringify(updatedUser));
+    localStorage.setItem('tnerd_session', JSON.stringify(cleaned));
   }
 }
+
+/**
+ * IndexedDB helper for persisting directory handles across sessions
+ */
+const DB = {
+  _db: null,
+  _open() {
+    if (this._db) return Promise.resolve(this._db);
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('tnerd_handles', 1);
+      req.onupgradeneeded = (e) => {
+        e.target.result.createObjectStore('handles');
+      };
+      req.onsuccess = (e) => {
+        this._db = e.target.result;
+        resolve(this._db);
+      };
+      req.onerror = (e) => reject(e.target.error);
+    });
+  },
+  async save(courseId, handle) {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('handles', 'readwrite');
+      tx.objectStore('handles').put(handle, courseId);
+      tx.oncomplete = () => resolve();
+      tx.onerror = (e) => reject(e.target.error);
+    });
+  },
+  async get(courseId) {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('handles', 'readonly');
+      const req = tx.objectStore('handles').get(courseId);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = (e) => reject(e.target.error);
+    });
+  },
+  async keys() {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('handles', 'readonly');
+      const req = tx.objectStore('handles').getAllKeys();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = (e) => reject(e.target.error);
+    });
+  },
+  async remove(courseId) {
+    const db = await this._open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('handles', 'readwrite');
+      tx.objectStore('handles').delete(courseId);
+      tx.oncomplete = () => resolve();
+      tx.onerror = (e) => reject(e.target.error);
+    });
+  }
+};
 
 /**
  * Course Manager
@@ -280,10 +351,24 @@ class CourseManager {
     this.user = user;
     this.activeCourseId = null;
     this.activeCourseData = null;
+    this._handleCache = new Map();
     
     this.initElements();
     this.initListeners();
-    this.renderCourseList();
+    this._restoreFromIdb().then(() => {
+      this.renderCourseList();
+      this.updateStats();
+      const ids = Object.keys(this.user.courses);
+      if (ids.length > 0) {
+        for (const id of ids) {
+          if (this.user.courses[id].sections && this.user.courses[id].sections.length > 0) {
+            this.selectCourse(id);
+            return;
+          }
+        }
+        this.selectCourse(ids[0]);
+      }
+    });
   }
 
   initElements() {
@@ -310,9 +395,18 @@ class CourseManager {
     // Video Custom Logic Elements
     this.btnPlayPause = document.getElementById('btn-play-pause');
     this.videoProgress = document.getElementById('video-progress');
+    this.videoBuffered = document.getElementById('video-buffered');
     this.progressBar = document.querySelector('.progress-bar-container');
     this.currTimeEl = document.getElementById('curr-time');
     this.durTimeEl = document.getElementById('dur-time');
+    this.btnVolume = document.getElementById('btn-volume');
+    this.volumeSlider = document.getElementById('volume-slider');
+    this.speedLabel = document.getElementById('speed-label');
+    this.btnSpeed = document.getElementById('btn-speed');
+    this.btnPip = document.getElementById('btn-pip');
+    this.videoTitleOverlay = document.getElementById('video-title-overlay');
+    this.videoCurrentTitle = document.getElementById('video-current-title');
+    this.videoWrapper = document.querySelector('.video-wrapper');
   }
 
   initListeners() {
@@ -339,18 +433,53 @@ class CourseManager {
       this.durTimeEl.innerText = this.formatTime(this.videoPlayer.duration);
     };
 
+    this.videoPlayer.onprogress = () => this.updateBufferedProgress();
+
     this.btnPlayPause.onclick = () => this.togglePlay();
     this.videoPlayer.onclick = () => this.togglePlay();
 
     this.progressBar.onclick = (e) => this.seekVideo(e);
 
-    // Custom Controls
-    document.getElementById('btn-skip-back').onclick = () => this.videoPlayer.currentTime -= 10;
-    document.getElementById('btn-skip-forward').onclick = () => this.videoPlayer.currentTime += 10;
-    document.getElementById('btn-fullscreen').onclick = () => {
-      if (this.videoPlayer.requestFullscreen) this.videoPlayer.requestFullscreen();
-      else if (this.videoPlayer.webkitRequestFullscreen) this.videoPlayer.webkitRequestFullscreen();
+    // Skip buttons
+    document.getElementById('btn-skip-back').onclick = () => { this.videoPlayer.currentTime -= 10; };
+    document.getElementById('btn-skip-forward').onclick = () => { this.videoPlayer.currentTime += 10; };
+
+    // Fullscreen
+    document.getElementById('btn-fullscreen').onclick = () => this.toggleFullscreen();
+
+    // Volume
+    this.btnVolume.onclick = () => this.toggleMute();
+    this.volumeSlider.oninput = () => this.handleVolumeChange();
+
+    // Speed
+    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+    this.btnSpeed.onclick = () => {
+      const current = this.videoPlayer.playbackRate;
+      const idx = speeds.indexOf(current);
+      const next = speeds[(idx + 1) % speeds.length];
+      this.videoPlayer.playbackRate = next;
+      this.speedLabel.textContent = `${next}x`;
     };
+
+    // PiP
+    this.btnPip.onclick = () => this.togglePip();
+
+    // Keyboard shortcuts
+    this.setupKeyboardShortcuts();
+
+    // Auto-hide controls
+    this.setupAutoHideControls();
+
+    // Video title overlay show/hide
+    this.videoPlayer.onplay = () => {
+      if (this.currentLesson) {
+        this.videoCurrentTitle.textContent = this.currentLesson.name;
+        this.videoTitleOverlay.classList.remove('hidden');
+        setTimeout(() => this.videoTitleOverlay.classList.add('hidden'), 3000);
+      }
+    };
+
+    this.videoPlayer.onpause = () => this.saveProgress();
 
     // Rename
     this.btnRename.onclick = () => {
@@ -370,7 +499,7 @@ class CourseManager {
     };
   }
 
-  async scanDirectoryAPI(handle) {
+  async scanDirectoryAPI(handle, silent) {
     const sections = [];
     for await (const [name, entry] of handle.entries()) {
       if (entry.kind === 'directory') {
@@ -392,7 +521,11 @@ class CourseManager {
       }
     }
     sections.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
-    this.addCourse(handle.name, sections);
+    this._addCourseData(handle.name, sections);
+    await DB.save(handle.name, handle).catch(() => {});
+    window.authManager.saveUserData(this.user);
+    this.renderCourseList();
+    if (!silent) this.selectCourse(handle.name);
   }
 
   scanFilesFallback(files) {
@@ -419,10 +552,13 @@ class CourseManager {
       return s;
     });
     sections.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
-    this.addCourse(courseId, sections);
+    this._addCourseData(courseId, sections);
+    window.authManager.saveUserData(this.user);
+    this.renderCourseList();
+    window.ui.showToast('Course added (note: file picker courses cannot auto-restore after reload)', 'info');
   }
 
-  addCourse(id, sections) {
+  _addCourseData(id, sections) {
     if (!this.user.courses[id]) {
       this.user.courses[id] = { 
         displayName: id, 
@@ -431,13 +567,8 @@ class CourseManager {
         sections: sections 
       };
     } else {
-      // Update sections if already exists
       this.user.courses[id].sections = sections;
     }
-    
-    window.authManager.saveUserData(this.user);
-    this.renderCourseList();
-    this.selectCourse(id);
   }
 
   renderCourseList() {
@@ -456,21 +587,52 @@ class CourseManager {
       const tab = document.createElement('div');
       tab.className = `course-tab ${this.activeCourseId === id ? 'active' : ''}`;
       
+      const tabContent = document.createElement('div');
+      tabContent.className = 'course-tab-content';
+      tabContent.onclick = () => this.selectCourse(id);
+      
+      const titleRow = document.createElement('div');
+      titleRow.className = 'course-tab-title-row';
+      
       const titleSpan = document.createElement('span');
-      titleSpan.innerHTML = `📚 ${course.displayName || id}`;
-      titleSpan.style.flex = "1";
-      titleSpan.onclick = () => this.selectCourse(id);
+      titleSpan.className = 'course-tab-title';
+      titleSpan.textContent = course.displayName || id;
+      
+      const lessonCount = course.sections
+        ? course.sections.reduce((acc, s) => acc + s.lessons.length, 0)
+        : 0;
+      const completedCount = Object.keys(course.completed || {}).length;
+      const countLabel = document.createElement('span');
+      countLabel.className = 'course-tab-count';
+      countLabel.textContent = `${completedCount}/${lessonCount}`;
+      
+      titleRow.appendChild(titleSpan);
+      titleRow.appendChild(countLabel);
+      
+      if (lessonCount > 0) {
+        const pct = Math.round((completedCount / lessonCount) * 100);
+        const progressOuter = document.createElement('div');
+        progressOuter.className = 'course-tab-progress';
+        const progressInner = document.createElement('div');
+        progressInner.className = 'course-tab-progress-fg';
+        progressInner.style.width = `${pct}%`;
+        progressOuter.appendChild(progressInner);
+        tabContent.appendChild(titleRow);
+        tabContent.appendChild(progressOuter);
+      } else {
+        tabContent.appendChild(titleRow);
+      }
       
       const delBtn = document.createElement('button');
       delBtn.className = 'btn-delete-course';
-      delBtn.innerHTML = '🗑️';
+      delBtn.textContent = '\u00D7';
       delBtn.title = 'Remove Course';
       delBtn.onclick = (e) => {
         e.stopPropagation();
         this.deleteCourse(id);
       };
       
-      tab.appendChild(titleSpan);
+      tab.appendChild(tabContent);
       tab.appendChild(delBtn);
       this.courseListEl.appendChild(tab);
     });
@@ -484,33 +646,91 @@ class CourseManager {
         this.activeCourseData = null;
         this.courseTree.innerHTML = '<div style="padding: 1rem; color: var(--text-dim); font-size: 0.8rem; text-align: center;">No course selected.</div>';
       }
+      DB.remove(id).catch(() => {});
       window.authManager.saveUserData(this.user);
       this.renderCourseList();
       window.ui.showToast('Course removed from library', 'info');
     }
   }
 
-  selectCourse(id) {
+  async _restoreFromIdb() {
+    const keys = await DB.keys().catch(() => []);
+    for (const courseId of keys) {
+      if (!this.user.courses[courseId]) {
+        this.user.courses[courseId] = {
+          displayName: courseId,
+          completed: {},
+          positions: {},
+          sections: []
+        };
+      }
+      const handle = await DB.get(courseId).catch(() => null);
+      if (!handle) continue;
+      this._handleCache.set(courseId, handle);
+      let permission = 'denied';
+      try {
+        if (handle.queryPermission) permission = await handle.queryPermission({ mode: 'read' });
+      } catch (e) { continue; }
+      if (permission !== 'granted') continue;
+      try {
+        const sections = await this._buildSectionsFromHandle(handle);
+        this._addCourseData(courseId, sections);
+      } catch (e) {
+        continue;
+      }
+    }
+  }
+
+  async selectCourse(id) {
     this.activeCourseId = id;
     const course = this.user.courses[id];
-    
     this.activeCourseData = course;
     
-    const isAvailable = course.sections && course.sections.length > 0;
     const displayName = course.displayName || id;
+    const hasSections = course.sections && course.sections.length > 0;
+    const handle = this._handleCache.get(id);
     
-    this.lessonTitle.innerText = isAvailable ? displayName : `${displayName} (Course Not Found)`;
+    this.lessonTitle.innerText = displayName;
     this.breadcrumbs.innerText = `Courses / ${displayName}`;
     this.btnRename.classList.remove('hidden');
     
-    if (isAvailable) {
+    if (hasSections) {
       this.renderTree();
+    } else if (handle) {
+      let permission = 'denied';
+      try {
+        if (handle.queryPermission) permission = await handle.queryPermission({ mode: 'read' });
+        if (permission === 'prompt' && handle.requestPermission) permission = await handle.requestPermission({ mode: 'read' });
+      } catch (e) {}
+      if (permission === 'granted') {
+        const sections = await this._buildSectionsFromHandle(handle);
+        this._addCourseData(id, sections);
+        this.renderTree();
+      } else {
+        this.courseTree.innerHTML = `
+          <div style="padding: 2rem; text-align: center; color: var(--text-dim);">
+            <p>Click to restore access to the course folder.</p>
+            <button class="btn-sync primary-btn" style="margin: 1rem auto 0; width: auto; padding: 0.6rem 1.5rem;">Restore Course Access</button>
+          </div>
+        `;
+        this.courseTree.querySelector('.btn-sync').onclick = async () => {
+          try {
+            let p = 'prompt';
+            if (handle.requestPermission) p = await handle.requestPermission({ mode: 'read' });
+            if (p === 'granted') {
+              const secs = await this._buildSectionsFromHandle(handle);
+              this._addCourseData(id, secs);
+              this.renderTree();
+              window.ui.showToast('Course access restored', 'success');
+            }
+          } catch (e) {}
+        };
+      }
     } else {
       this.courseTree.innerHTML = `
         <div style="padding: 2rem; text-align: center; color: var(--text-dim);">
-          <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">🔍</span>
-          <p>Files not found in local storage session.</p>
-          <p style="font-size: 0.8rem; margin-top: 0.5rem;">Please use "Add New Course" to re-sync this folder.</p>
+          <p>No course data found.</p>
+          <p style="font-size: 0.8rem; margin-top: 0.5rem;">Select the course folder to load it.</p>
         </div>
       `;
     }
@@ -520,13 +740,54 @@ class CourseManager {
     this.showHome();
   }
 
+  async _buildSectionsFromHandle(handle) {
+    const sections = [];
+    for await (const [name, entry] of handle.entries()) {
+      if (entry.kind === 'directory') {
+        const section = { name, lessons: [] };
+        for await (const [fileName, fileEntry] of entry.entries()) {
+          if (fileEntry.kind === 'file' && fileName.endsWith('.mp4')) {
+            section.lessons.push({
+              name: fileName.replace('.mp4', ''),
+              fullName: fileName,
+              handle: fileEntry,
+              type: 'handle'
+            });
+          }
+        }
+        if (section.lessons.length > 0) {
+          section.lessons.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
+          sections.push(section);
+        }
+      }
+    }
+    sections.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
+    return sections;
+  }
+
+  _findLessonInSections(sections, fullName) {
+    for (const section of sections) {
+      for (const lesson of section.lessons) {
+        if (lesson.fullName === fullName) return lesson.handle;
+      }
+    }
+    return null;
+  }
+
+  saveProgress() {
+    if (!this.currentLesson) return;
+    const key = this.currentLesson.fullName;
+    this.user.courses[this.activeCourseId].positions[key] = this.videoPlayer.currentTime;
+    window.authManager.saveUserData(this.user);
+  }
+
   showHome() {
+    this.saveProgress();
     this.homeScreen.classList.remove('hidden');
     this.lessonView.classList.add('hidden');
     this.videoPlayer.pause();
     this.updateStats();
     
-    // Clear active lesson
     document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('active'));
   }
 
@@ -543,13 +804,14 @@ class CourseManager {
 
   renderTree() {
     this.courseTree.innerHTML = '';
-    this.activeCourseData.sections.forEach(section => {
+    const allLists = [];
+    this.activeCourseData.sections.forEach((section, idx) => {
       const sectionEl = document.createElement('div');
       sectionEl.className = 'section';
       
       const header = document.createElement('div');
       header.className = 'section-header';
-      header.innerHTML = `<span>📁</span> <span>${section.name}</span>`;
+      header.innerHTML = `<span>${section.name}</span>`;
       
       const list = document.createElement('div');
       list.className = 'lesson-list';
@@ -558,28 +820,27 @@ class CourseManager {
         const lessonEl = document.createElement('div');
         const isCompleted = this.user.courses[this.activeCourseId].completed[lesson.fullName];
         lessonEl.className = `lesson-item ${isCompleted ? 'completed' : ''}`;
-        lessonEl.innerHTML = `<span>${isCompleted ? '✓' : '○'}</span> ${lesson.name}`;
+        lessonEl.innerHTML = `<span class="lesson-status">${isCompleted ? '\u2713' : '\u25CB'}</span> ${lesson.name}`;
         
         lessonEl.onclick = () => this.playLesson(section, lesson, lessonEl);
         list.appendChild(lessonEl);
       });
 
       header.onclick = () => {
-        const isCurrentlyActive = list.classList.contains('active');
-        // Retract all others (optional, but requested "clicking again retracts")
-        // list.classList.toggle('active'); 
-        
-        // Improved toggle:
-        if (isCurrentlyActive) {
-          list.classList.remove('active');
-        } else {
-          list.classList.add('active');
-        }
+        const isOpen = list.classList.contains('active');
+        allLists.forEach(l => l.classList.remove('active'));
+        if (!isOpen) list.classList.add('active');
       };
+      
+      allLists.push(list);
       sectionEl.appendChild(header);
       sectionEl.appendChild(list);
       this.courseTree.appendChild(sectionEl);
     });
+
+    if (allLists.length > 0) {
+      allLists[0].classList.add('active');
+    }
   }
 
   async playLesson(section, lesson, element) {
@@ -593,51 +854,94 @@ class CourseManager {
     this.lessonView.classList.remove('hidden');
     this.videoControls.classList.remove('hidden');
 
+    if (this.currentBlobUrl) {
+      URL.revokeObjectURL(this.currentBlobUrl);
+    }
+
     let url;
     if (lesson.type === 'handle') {
-      const file = await lesson.handle.getFile();
+      let fileHandle = lesson.handle;
+      if (!fileHandle || typeof fileHandle.getFile !== 'function') {
+        const cached = this._handleCache.get(this.activeCourseId);
+        if (cached && cached.queryPermission) {
+          let p = 'denied';
+          try {
+            p = await cached.queryPermission({ mode: 'read' });
+            if (p === 'prompt' && cached.requestPermission) p = await cached.requestPermission({ mode: 'read' });
+          } catch (e) {}
+          if (p === 'granted') {
+            const sections = await this._buildSectionsFromHandle(cached);
+            this._addCourseData(this.activeCourseId, sections);
+            const found = this._findLessonInSections(sections, lesson.fullName);
+            if (found) fileHandle = found;
+          }
+        }
+        if (!fileHandle || typeof fileHandle.getFile !== 'function') {
+          window.ui.showToast('Course data expired. Re-sync the course folder.', 'error');
+          return;
+        }
+      }
+      const file = await fileHandle.getFile();
       url = URL.createObjectURL(file);
     } else {
+      if (!lesson.file || !(lesson.file instanceof Blob)) {
+        window.ui.showToast('Course data expired. Re-sync the course folder.', 'error');
+        return;
+      }
       url = URL.createObjectURL(lesson.file);
     }
+    this.currentBlobUrl = url;
 
     this.videoPlayer.src = url;
     this.videoPlayer.load();
     
     this.videoPlayer.oncanplay = () => {
-      this.videoPlayer.play().catch(e => console.error("Play failed:", e));
+      this.videoPlayer.play().catch(e => {
+        if (e.name === 'NotAllowedError') {
+          window.ui.showToast('Click anywhere on the video to play', 'info');
+        }
+      });
     };
 
     this.videoPlayer.onerror = (e) => {
-      console.error("Video Error:", e);
-      window.ui.showToast("Error loading video. Please re-sync the course folder.", "error");
+      window.ui.showToast("Failed to load video.", "error");
     };
 
-    this.btnPlayPause.innerText = '⏸';
+    this.updatePlayPauseIcon(true);
     this.currentLesson = lesson;
     this.currentLessonElement = element;
 
     const lastPos = this.user.courses[this.activeCourseId].positions[lesson.fullName] || 0;
-    this.videoPlayer.currentTime = lastPos;
+    if (lastPos > 0) {
+      this.videoPlayer.currentTime = lastPos;
+    }
   }
 
   handleTimeUpdate() {
     if (!this.currentLesson) return;
+    const dur = this.videoPlayer.duration;
+    if (!dur || !isFinite(dur)) return;
+
     const key = this.currentLesson.fullName;
     this.user.courses[this.activeCourseId].positions[key] = this.videoPlayer.currentTime;
     
-    if (this.videoPlayer.currentTime / this.videoPlayer.duration > 0.9 && !this.user.courses[this.activeCourseId].completed[key]) {
+    if (this.videoPlayer.currentTime / dur > 0.9 && !this.user.courses[this.activeCourseId].completed[key]) {
       this.markCompleted(key);
     }
 
-    window.authManager.saveUserData(this.user);
+    if (!this._saveThrottle) this._saveThrottle = 0;
+    const now = Date.now();
+    if (now - this._saveThrottle > 2000) {
+      this._saveThrottle = now;
+      window.authManager.saveUserData(this.user);
+    }
   }
 
   markCompleted(key) {
     this.user.courses[this.activeCourseId].completed[key] = true;
     if (this.currentLessonElement) {
       this.currentLessonElement.classList.add('completed');
-      this.currentLessonElement.querySelector('span').innerText = '✓';
+      this.currentLessonElement.querySelector('.lesson-status').textContent = '\u2713';
     }
     this.updateProgress();
     window.authManager.saveUserData(this.user);
@@ -670,10 +974,19 @@ class CourseManager {
   togglePlay() {
     if (this.videoPlayer.paused) {
       this.videoPlayer.play();
-      this.btnPlayPause.innerText = '⏸';
+      this.updatePlayPauseIcon(true);
     } else {
       this.videoPlayer.pause();
-      this.btnPlayPause.innerText = '▶';
+      this.updatePlayPauseIcon(false);
+    }
+  }
+
+  updatePlayPauseIcon(isPlaying) {
+    const playIcon = document.getElementById('icon-play');
+    const pauseIcon = document.getElementById('icon-pause');
+    if (playIcon && pauseIcon) {
+      playIcon.classList.toggle('hidden', isPlaying);
+      pauseIcon.classList.toggle('hidden', !isPlaying);
     }
   }
 
@@ -683,10 +996,119 @@ class CourseManager {
     this.currTimeEl.innerText = this.formatTime(this.videoPlayer.currentTime);
   }
 
+  updateBufferedProgress() {
+    if (!this.videoPlayer.buffered || !this.videoPlayer.buffered.length) return;
+    const end = this.videoPlayer.buffered.end(this.videoPlayer.buffered.length - 1);
+    const pct = (end / this.videoPlayer.duration) * 100;
+    this.videoBuffered.style.width = `${pct}%`;
+  }
+
   seekVideo(e) {
     const rect = this.progressBar.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
     this.videoPlayer.currentTime = pos * this.videoPlayer.duration;
+  }
+
+  toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      this.videoWrapper.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  toggleMute() {
+    this.videoPlayer.muted = !this.videoPlayer.muted;
+    this.updateVolumeIcons();
+  }
+
+  handleVolumeChange() {
+    this.videoPlayer.volume = parseFloat(this.volumeSlider.value);
+    this.videoPlayer.muted = false;
+    this.updateVolumeIcons();
+  }
+
+  updateVolumeIcons() {
+    const volIcon = document.getElementById('icon-volume');
+    const mutedIcon = document.getElementById('icon-muted');
+    const isMuted = this.videoPlayer.muted || this.videoPlayer.volume === 0;
+    volIcon.classList.toggle('hidden', isMuted);
+    mutedIcon.classList.toggle('hidden', !isMuted);
+    this.volumeSlider.value = isMuted ? '0' : String(this.videoPlayer.volume);
+  }
+
+  async togglePip() {
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else if (this.videoPlayer.requestPictureInPicture) {
+        await this.videoPlayer.requestPictureInPicture();
+      }
+    } catch (e) {
+      // PiP not supported
+    }
+  }
+
+  setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+      if (this.lessonView.classList.contains('hidden')) return;
+      if (e.target.tagName === 'INPUT') return;
+
+      switch (e.key) {
+        case ' ':
+        case 'k':
+          e.preventDefault();
+          this.togglePlay();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          this.videoPlayer.currentTime -= 10;
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          this.videoPlayer.currentTime += 10;
+          break;
+        case 'f':
+          this.toggleFullscreen();
+          break;
+        case 'm':
+          this.toggleMute();
+          break;
+        case 'j':
+          this.videoPlayer.currentTime -= 10;
+          break;
+        case 'l':
+          this.videoPlayer.currentTime += 10;
+          break;
+      }
+    });
+  }
+
+  setupAutoHideControls() {
+    let hideTimer = null;
+    const controls = this.videoControls;
+
+    const showControls = () => {
+      controls.classList.remove('controls-hidden');
+      this.videoWrapper.style.cursor = '';
+      clearTimeout(hideTimer);
+      if (!this.videoPlayer.paused) {
+        hideTimer = setTimeout(() => {
+          controls.classList.add('controls-hidden');
+          this.videoWrapper.style.cursor = 'none';
+        }, 3000);
+      }
+    };
+
+    this.videoWrapper.addEventListener('mousemove', showControls);
+    this.videoWrapper.addEventListener('mouseenter', showControls);
+    this.videoWrapper.addEventListener('mouseleave', () => {
+      if (!this.videoPlayer.paused) {
+        controls.classList.add('controls-hidden');
+        this.videoWrapper.style.cursor = 'none';
+      }
+    });
+    this.videoPlayer.addEventListener('play', showControls);
   }
 
   formatTime(seconds) {

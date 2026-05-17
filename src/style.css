@@ -227,6 +227,11 @@ body::after {
   width: 400px;
 }
 
+.search-box svg {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
 .search-box input {
   background: transparent;
   border: none;
@@ -358,6 +363,7 @@ video {
   border-radius: 2px;
   cursor: pointer;
   position: relative;
+  overflow: hidden;
 }
 
 .progress-bar-fg {
@@ -563,21 +569,6 @@ video {
   transform: translateY(-2px);
   box-shadow: 0 10px 20px rgba(138, 112, 255, 0.2);
 }
-
-.text-btn {
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: var(--accent-primary);
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 1rem;
-  font-size: 0.9rem;
-  transition: var(--transition);
-  display: block;
-}
-
-.text-btn:hover { color: #fff; }
 
 .course-switcher {
   padding: 0 1rem;
@@ -878,51 +869,6 @@ video {
 
 .text-btn:hover { color: #fff; }
 
-.logo-btn {
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.logo-btn:hover { opacity: 0.8; transform: scale(1.02); }
-
-.course-tab {
-  padding: 0.8rem 1rem;
-  border-radius: 12px;
-  background: var(--glass-surface);
-  border: 1px solid var(--glass-border);
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.course-tab:hover { background: rgba(255, 255, 255, 0.05); }
-.course-tab.active {
-  background: rgba(138, 112, 255, 0.1);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.btn-delete-course {
-  background: transparent;
-  border: none;
-  color: var(--text-dim);
-  font-size: 0.8rem;
-  padding: 4px;
-  border-radius: 6px;
-  opacity: 0;
-  transition: var(--transition);
-  cursor: pointer;
-}
-
-.course-tab:hover .btn-delete-course { opacity: 1; }
-.btn-delete-course:hover { color: #ff4d4d; background: rgba(255, 77, 77, 0.1); }
-
 /* Landing & Auth */
 .overlay {
   position: fixed;
@@ -940,3 +886,190 @@ video {
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .fade-in { animation: fadeIn 0.5s ease forwards; }
+
+.logo-btn {
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.logo-btn:hover {
+  opacity: 0.8;
+  transform: scale(1.02);
+}
+
+.toggle-password svg {
+  pointer-events: none;
+}
+
+.custom-controls button svg {
+  width: 20px;
+  height: 20px;
+}
+
+#btn-skip-back svg,
+#btn-skip-forward svg {
+  width: 16px;
+  height: 16px;
+}
+
+#btn-fullscreen svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-delete-course {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  opacity: 0;
+  transition: var(--transition);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.course-tab:hover .btn-delete-course { opacity: 1; }
+.btn-delete-course:hover { color: #ff4d4d; background: rgba(255, 77, 77, 0.1); }
+
+.lesson-status {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+  color: var(--text-dim);
+  transition: var(--transition);
+}
+
+.icon-btn:hover svg {
+  color: var(--text-main);
+}
+
+/* Course tab progress bar */
+.course-tab-content {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.course-tab-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.course-tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-tab-count {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.course-tab-progress {
+  height: 3px;
+  background: var(--glass-border);
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.course-tab-progress-fg {
+  height: 100%;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* Volume slider */
+.volume-slider {
+  width: 80px;
+  height: 4px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* Speed button */
+#btn-speed {
+  font-size: 0.8rem;
+  font-weight: 700;
+  min-width: 36px;
+  letter-spacing: 0.5px;
+}
+
+/* Auto-hide controls */
+.custom-controls.controls-hidden {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* Buffered bar */
+.progress-bar-bg-buffered {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  width: 0;
+  pointer-events: none;
+}
+
+/* Video title overlay */
+.video-title-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 10;
+}
+
+.video-title-overlay.hidden {
+  opacity: 0;
+}
+
+.video-title-overlay span {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Fix for settings toggle-password indent */
+.settings-card .toggle-password {
+  top: 2.2rem;
+}
+
+/* Scrollbar for course-switcher */
+.course-switcher::-webkit-scrollbar {
+  width: 4px;
+}
+.course-switcher::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 10px;
+}
